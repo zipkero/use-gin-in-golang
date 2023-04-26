@@ -9,3 +9,13 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: 1q2w3e!
       MONGO_INITDB_DATABASE: SAMPLE
+  redis:
+    image: redis:6.0-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      # 메모리 부족 시 가장 최근에 사용하지 않은 항목 제거
+      REDIS_MAXMEMORY_POLICY: allkeys-lru
+      # 최대 메모리 용량 설정
+      REDIS_MAXMEMORY: "512mb"
+
