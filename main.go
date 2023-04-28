@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/zipkero/use-gin-in-golang/config"
 	"github.com/zipkero/use-gin-in-golang/handlers"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,14 +21,21 @@ var recipesHandler *handlers.RecipeHandler
 
 func init() {
 	ctx = context.Background()
+	mongodbConfigGetter := config.MongodbConfig{Name: "mongodb"}
+	redisConfigGetter := config.RedisConfig{Name: "redis"}
+	mongodbConfig, _ := mongodbConfigGetter.Get()
+	redisConfig, _ := redisConfigGetter.Get()
+
+	log.Println(mongodbConfig)
+	log.Println(redisConfig)
 	client, err = mongo.Connect(ctx,
 		options.Client().ApplyURI(
-			"mongodb://admin:1q2w3e!@localhost:27017",
+			fmt.Sprintf("mongodb://%s:%s@%s:%d", mongodbConfig.Username, mongodbConfig.Password, mongodbConfig.Host, mongodbConfig.Port),
 		),
 	)
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost: 6379",
-		Password: "",
+		Addr:     fmt.Sprintf("%s: %d", redisConfig.Host, redisConfig.Port),
+		Password: redisConfig.Password,
 		DB:       0,
 	})
 	status := redisClient.Ping(ctx)
@@ -36,7 +44,7 @@ func init() {
 	if err = client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		log.Fatal(err)
 	}
-	log.Println("connected mongodb")
+	log.Println("connected mongodbConfig")
 	collection = client.Database("SAMPLE").Collection("recipes")
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 

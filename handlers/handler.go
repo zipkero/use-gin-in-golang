@@ -72,7 +72,7 @@ func (handler *RecipeHandler) ListRecipeHandler(c *gin.Context) {
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else {
-		log.Printf("request to redis")
+		log.Printf("request to redisConfig")
 		recipes := make([]models.Recipe, 0)
 		json.Unmarshal([]byte(val), &recipes)
 		c.JSON(http.StatusOK, recipes)
