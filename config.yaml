@@ -1,4 +1,6 @@
 database:
+  env:
+    API_KEY: -_-a
   redis:
     host: localhost
     port: 6379

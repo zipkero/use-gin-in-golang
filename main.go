@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
+	"net/http"
+	"os"
 )
 
 var ctx context.Context
@@ -23,11 +25,9 @@ func init() {
 	ctx = context.Background()
 	mongodbConfigGetter := config.MongodbConfig{Name: "mongodb"}
 	redisConfigGetter := config.RedisConfig{Name: "redis"}
-	mongodbConfig, _ := mongodbConfigGetter.Get()
-	redisConfig, _ := redisConfigGetter.Get()
+	mongodbConfig, _ := mongodbConfigGetter.GetConfig()
+	redisConfig, _ := redisConfigGetter.GetConfig()
 
-	log.Println(mongodbConfig)
-	log.Println(redisConfig)
 	client, err = mongo.Connect(ctx,
 		options.Client().ApplyURI(
 			fmt.Sprintf("mongodb://%s:%s@%s:%d", mongodbConfig.Username, mongodbConfig.Password, mongodbConfig.Host, mongodbConfig.Port),
@@ -47,14 +47,27 @@ func init() {
 	log.Println("connected mongodbConfig")
 	collection = client.Database("SAMPLE").Collection("recipes")
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
+}
 
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetHeader("X-API-KEY") != os.Getenv("X-API-KEY") {
+			c.AbortWithStatus(http.StatusUnauthorized)
+		}
+		c.Next()
+	}
 }
 
 func main() {
 	router := gin.Default()
-	router.POST("/recipes", recipesHandler.CreateRecipeHandler)
-	router.GET("/recipes", recipesHandler.ListRecipeHandler)
-	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
-	router.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+	authorized := router.Group("/")
+	authorized.Use(AuthMiddleware())
+	{
+		authorized.POST("/recipes", recipesHandler.CreateRecipeHandler)
+		authorized.GET("/recipes", recipesHandler.ListRecipeHandler)
+		authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+	}
+
 	router.Run()
 }
