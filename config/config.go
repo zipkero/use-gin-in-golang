@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/spf13/viper"
 )
 
@@ -17,7 +16,7 @@ func GetConfig(name string, configGetter Getter) (interface{}, error) {
 		return nil, err
 	}
 	config := configGetter.get()
-	if err := viper.Sub(fmt.Sprintf(`database.%s`, name)).Unmarshal(config); err != nil {
+	if err := viper.Sub(name).Unmarshal(config); err != nil {
 		return nil, err
 	}
 	return config, nil

@@ -23,8 +23,8 @@ var recipesHandler *handlers.RecipeHandler
 
 func init() {
 	ctx = context.Background()
-	mongodbConfigGetter := config.MongodbConfig{Name: "mongodb"}
-	redisConfigGetter := config.RedisConfig{Name: "redis"}
+	mongodbConfigGetter := config.MongodbConfig{Name: "database.mongodb"}
+	redisConfigGetter := config.RedisConfig{Name: "database.redis"}
 	mongodbConfig, _ := mongodbConfigGetter.GetConfig()
 	redisConfig, _ := redisConfigGetter.GetConfig()
 
